@@ -2,36 +2,76 @@
 
 pragma solidity ^0.8.18;
 
-// 1️⃣ Define a Tweet Struct with author, content, timestamp, likes
-// 2️⃣ Add the struct to array
-// 3️⃣ Test Tweets
+contract Twitter {
+    error Twitter__invalidLength();
+    error Twitter__onlyOwner();
 
-contract Twitter{
-
-    struct Tweet{
+    struct Tweet {
         address author;
         string content;
         uint256 timestamp;
         uint256 likes;
     }
+    /** 
+     * * Variables */
+    
+    uint16 constant MAX_TWEET_LENGTH = 280;
+    address immutable s_owner;
 
-    mapping(address => Tweet[]) private tweets;
+    mapping(address => Tweet[]) private s_tweets;
 
-    function createTweet(string memory _tweet) internal {
+    modifier tweet(string memory _tweet) {
+        _;
         Tweet memory newTweet = Tweet({
             author: msg.sender,
             content: _tweet,
             timestamp: block.timestamp,
-            likes:0
+            likes: 0
         });
-        tweets[msg.sender].push(newTweet);
+        s_tweets[msg.sender].push(newTweet);
+    }
+    modifier onlyOwner() {
+        if (msg.sender != s_owner) {
+            revert Twitter__onlyOwner();
+        }
+        _;
+    }
+
+    /*
+     * * Functions
+     */
+
+    constructor() {
+        s_owner = msg.sender;
+    }
+
+    function createTweet(
+        string memory _tweet
+    ) internal onlyOwner tweet(_tweet) {
+        if (
+            bytes(_tweet).length > MAX_TWEET_LENGTH || bytes(_tweet).length <= 0
+        ) {
+            revert Twitter__invalidLength();
+        }
+    }
+
+    function createTweetLonger(
+        string memory _tweet,
+        uint256 _maxLength
+    ) internal onlyOwner tweet(_tweet) {
+        if (bytes(_tweet).length > _maxLength || bytes(_tweet).length >= 0) {
+            revert Twitter__invalidLength();
+        }
     }
 
     /**Getter Functions */
-    function getTweet(Tweet memory _tweet, uint256 _i) public view returns(string memory){
-        return tweets[_tweet.author][_i].content;
+    function getTweet(
+        uint256 _i
+    ) public view returns (string memory) {
+        return s_tweets[msg.sender][_i].content;
     }
-    function getAlltweets(Tweet memory _tweet) public view returns(Tweet [] memory){
-        return tweets[_tweet.author];
+
+    function getAlltweets(address _owner) public view returns (Tweet[] memory) {
+        return s_tweets[_owner];
     }
 }
