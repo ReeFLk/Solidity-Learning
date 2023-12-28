@@ -21,7 +21,16 @@ contract Twitter {
     address immutable s_owner;
 
     mapping(address => Tweet[]) private s_tweets;
+    
+    /** 
+     * * Events */
 
+    event TweetCreated(uint256 tweetId, address tweetAuthor, string content, uint256 timestamp);
+    event TweetLiked(address liker, address tweetAuthor, uint256 tweetId, uint256 newLikeCount);
+
+    /*
+     * * Modifiers
+     */
     modifier tweet(string memory _tweet) {
         _;
         Tweet memory newTweet = Tweet({
@@ -32,7 +41,9 @@ contract Twitter {
             likes: 0
         });
         s_tweets[msg.sender].push(newTweet);
+        emit TweetCreated(newTweet.id, newTweet.author, newTweet.content, newTweet.timestamp);
     }
+
     modifier onlyOwner() {
         if (msg.sender != s_owner) {
             revert Twitter__onlyOwner();
@@ -59,10 +70,9 @@ contract Twitter {
     }
 
     function createTweetLonger(
-        string memory _tweet,
-        uint256 _maxLength
+        string memory _tweet
     ) external onlyOwner tweet(_tweet) {
-        if (bytes(_tweet).length > _maxLength || bytes(_tweet).length >= 0) {
+        if (bytes(_tweet).length >= 0) {
             revert Twitter__invalidLength();
         }
     }
@@ -71,6 +81,7 @@ contract Twitter {
         uint256 _idTweet
     ) external{
         s_tweets[msg.sender][_idTweet].likes++;
+        emit TweetLiked(msg.sender, s_tweets[msg.sender][_idTweet].author, _idTweet, s_tweets[msg.sender][_idTweet].likes);
     }
 
     function unlinkeTweet(
