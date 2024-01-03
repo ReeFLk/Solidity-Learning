@@ -44,6 +44,7 @@ contract TwitterTest is Test {
         assertEq(tweets.length, 0);
     }
 
+
     function testGetTotalLikesOfAUser() public {
         uint256 totalLikes = twitter.getTotalLikesOfAUser(address(this));
         assertEq(totalLikes, 0);
